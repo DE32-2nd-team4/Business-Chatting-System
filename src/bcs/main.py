@@ -2,13 +2,19 @@ from kafka import KafkaConsumer, KafkaProducer
 import time
 import json
 import threading
+import logging
+
 def send_message():
     global username
     global chatroom
+    log_file_path = f"/home/ec2-43-203-210-250.ap-northeast-2.compute.amazonaws.com:9092/team4/{chatroom}/chat.log"  
+    # 로그 파일 경로 (EC2 서버의 team4 폴더 아래 chatroom 폴더)
+    logging.basicConfig(filename=log_file_path, level=logging.INFO, format='%(message)s')
     producer = KafkaProducer (
-        bootstrap_servers=['localhost:29092'],
+        bootstrap_servers=['ec2-43-203-210-250.ap-northeast-2.compute.amazonaws.com:9092'],
         value_serializer=lambda x:json.dumps(x).encode('utf-8'),
         )
+
 
     while(True):
         message = input(">> ")  # 사용자 입력 받기
@@ -17,14 +23,18 @@ def send_message():
             break
         m_message = {'nickname': username, 'message': message, 'time':time.time()}
         producer.send(chatroom, value=m_message)
+        logging.info(json.dumps(m_message))
+        # server/team4/chatroom/chat.log
+        # m_message를 chat.log에 삽입
         producer.flush()  # 메시지 전송 완료
+
 
 
 def receive_message():
     global chatroom
     global username
     receiver = KafkaConsumer(
-            bootstrap_servers='localhost:29092',
+            bootstrap_servers='ec2-43-203-210-250.ap-northeast-2.compute.amazonaws.com:9092',
             auto_offset_reset='earliest',
             value_deserializer=lambda x: json.loads(x.decode('utf-8')),
             )
