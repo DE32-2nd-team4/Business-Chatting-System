@@ -10,7 +10,7 @@ def send_message():
     global chatroom
     
     
-    log_file_path = f"~/atmp/chatdata/{chatroom}/chat.log"
+    log_file_path = f"~/tmp/chatdata/{chatroom}/chat.log"
     log_file_path = os.path.expanduser(log_file_path)
     # 로그 파일 경로 (EC2 서버의 team4 폴더 아래 chatroom 폴더)
     chatroom_dir = os.path.dirname(log_file_path)
@@ -23,6 +23,7 @@ def send_message():
     producer = KafkaProducer (
         bootstrap_servers=['ec2-43-203-210-250.ap-northeast-2.compute.amazonaws.com:9092'],
         value_serializer=lambda x:json.dumps(x).encode('utf-8'),
+        batch_size=16384,
         )
 
 
@@ -31,10 +32,10 @@ def send_message():
         if message == "exit":
             producer.close()
             break
-        m_message = {'nickname': username, 'message': message, 'time':time.time()}
+        m_message = {'nickname': username, 'message': message, 'time':time.ctime()}
         producer.send(chatroom, value=m_message)
-        with open(log_file_path, 'a') as log_file:
-            log_file.write(json.dumps(m_message) + '\n')  # 줄바꿈 추가
+        with open(log_file_path, 'a', buffering=4096) as log_file:  # 4KB 버퍼 사용
+            log_file.write(json.dumps(m_message) + '\n')
         # server/team4/chatroom/chat.log
         # m_message를 chat.log에 삽입
         producer.flush()  # 메시지 전송 완료
