@@ -35,7 +35,7 @@ def send_message():
         m_message = {'nickname': username, 'message': message, 'time':time.ctime()}
         producer.send(chatroom, value=m_message)
         with open(log_file_path, 'a', buffering=4096) as log_file:  # 4KB 버퍼 사용
-            log_file.write(json.dumps(m_message) + '\n')
+            log_file.write(json.dumps(m_message, ensure_ascii=False) + '\n')
         # server/team4/chatroom/chat.log
         # m_message를 chat.log에 삽입
         producer.flush()  # 메시지 전송 완료
@@ -60,7 +60,7 @@ def receive_message():
             else:
                 print(f"{data['nickname']} >> {data['message']} | {data['time']}")
 
-    except KeyboardInterrput:
+    except KeyboardInterrupt:
         print("채팅 종료")
 
     finally:
