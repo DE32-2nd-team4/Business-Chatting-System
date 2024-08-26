@@ -7,7 +7,7 @@ import logging
 def send_message():
     global username
     global chatroom
-    log_file_path = f"/home/ec2-43-203-210-250.ap-northeast-2.compute.amazonaws.com:9092/team4/{chatroom}/chat.log"  
+    log_file_path = f"/home/ubuntu/team4/{chatroom}/chat.log"  
     # 로그 파일 경로 (EC2 서버의 team4 폴더 아래 chatroom 폴더)
     logging.basicConfig(filename=log_file_path, level=logging.INFO, format='%(message)s')
     producer = KafkaProducer (
