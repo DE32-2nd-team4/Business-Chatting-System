@@ -20,5 +20,8 @@ test = [
 [tool.pdm]
 distribution = true
 
-[tool.pdm.scripts]
-BCS = "bcs.__main__:main"
+[project.scripts]
+bcs = 'bcs.__main__:main'
+
+
+
