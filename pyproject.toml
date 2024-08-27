@@ -21,4 +21,4 @@ test = [
 distribution = false
 
 [tool.pdm.scripts]
-BCS = "python src/bcs/main.py"
+BCS = "bcs.__main__:main"
