@@ -5,7 +5,7 @@
 groups = ["default", "test"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:ce00ec105422b2cea6a13de433ca6d3d6e486f6f10ed3857d70055f55889305b"
+content_hash = "sha256:e2d333b86af81b0510597b09a858f6f298eebb3e18783f2ec9a62abf29654be2"
 
 [[metadata.targets]]
 requires_python = ">=3.8"
@@ -94,6 +94,17 @@ dependencies = [
 files = [
     {file = "pytest-8.3.2-py3-none-any.whl", hash = "sha256:4ba08f9ae7dcf84ded419494d229b48d0903ea6407b030eaec46df5e6a73bba5"},
     {file = "pytest-8.3.2.tar.gz", hash = "sha256:c132345d12ce551242c87269de812483f5bcc87cdbb4722e48487ba194f9fdce"},
+]
+
+[[package]]
+name = "schedule"
+version = "1.2.2"
+requires_python = ">=3.7"
+summary = "Job scheduling for humans."
+groups = ["default"]
+files = [
+    {file = "schedule-1.2.2-py3-none-any.whl", hash = "sha256:5bef4a2a0183abf44046ae0d164cadcac21b1db011bdd8102e4a0c1e91e06a7d"},
+    {file = "schedule-1.2.2.tar.gz", hash = "sha256:15fe9c75fe5fd9b9627f3f19cc0ef1420508f9f9a46f45cd0769ef75ede5f0b7"},
 ]
 
 [[package]]
