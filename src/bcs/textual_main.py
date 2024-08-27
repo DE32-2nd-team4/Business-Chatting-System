@@ -1,50 +1,60 @@
 from textual.app import App, ComposeResult
-from textual.widgets import Input, RichLog, Button
+from textual.widgets import Input, RichLog, Header
 from textual import on
 from kafka import KafkaProducer, KafkaConsumer
 import json
 import asyncio
 import threading
 import time
-import sys
-
-user_name = sys.argv[1]
 
 class ChatApp(App):
+    def __init__(self, user_name: str, chat_room: str, **kwargs) -> None:
+        super().__init__(**kwargs)
+        self.user_name = user_name
+        self.chat_room = chat_room
+
     def compose(self) -> ComposeResult:
         # UI 구성
-        yield RichLog(id="log")
+        yield Header()
+        yield RichLog(id="log", markup=True)
         yield Input(id="input")
-        #yield Button(label="Send", id="send_button")
     
     async def on_mount(self) -> None:
         # 페이지가 마운트될 때 Kafka consumer 스레드를 시작
+        self.title = f"<< {self.chat_room} >>"
         self.consumer_thread = threading.Thread(target=self.start_consumer, daemon=True)
         self.consumer_thread.start()
 
     def start_consumer(self):
         # Kafka consumer 초기화 및 메시지 수신
         self.consumer = KafkaConsumer(
-            #bootstrap_servers=['localhost:9092'],
-            bootstrap_servers=['ec2-43-203-210-250.ap-northeast-2.compute.amazonaws.com:9092'],
+            bootstrap_servers=['localhost:9092'],
+            #bootstrap_servers=['ec2-43-203-210-250.ap-northeast-2.compute.amazonaws.com:9092'],
             auto_offset_reset='earliest',
             value_deserializer=lambda x: json.loads(x.decode('utf-8'))
         )
-        self.consumer.subscribe(['team4'])
+        self.consumer.subscribe([self.chat_room])
 
         try:
             for message in self.consumer:
                 data = message.value
-                asyncio.run(self.update_log(data))
+                asyncio.run(self.update_msg(data))
         except KeyboardInterrupt:
             Print("채팅을 종료합니다...")
         finally:
             self.consumer.close()
 
-    async def update_log(self, data: dict) -> None:
-        # 로그에 메시지 추가
+    async def update_msg(self, data: dict) -> None:
+        # 메시지 추가
         log = self.query_one(RichLog)
-        log.write(f"[{data['nickname']}] {data['message']} | {data['time']}")
+
+        if data['nickname'] == self.user_name:
+        # 본인 메시지에 markdown 적용
+            log.write(f"[red]\[{data['nickname']}][/red] {data['message']} | {data['time']}")
+        elif data['nickname'] == "@bot":
+            log.write(f"[ansi_bright_blue]\[{data['nickname']}] {data['message']} | {data['time']}[/ansi_bright_blue]")
+        else:
+            log.write(f"\[{data['nickname']}] {data['message']} | {data['time']}")
 
     @on(Input.Submitted)
     async def on_input_submitted(self, event: Input.Submitted) -> None:
@@ -54,12 +64,12 @@ class ChatApp(App):
         if message.strip():
             # Kafka producer 초기화 및 메시지 전송
             producer = KafkaProducer(
-                #bootstrap_servers=['localhost:9092'],
-                bootstrap_servers=['ec2-43-203-210-250.ap-northeast-2.compute.amazonaws.com:9092'],
+                bootstrap_servers=['localhost:9092'],
+                #bootstrap_servers=['ec2-43-203-210-250.ap-northeast-2.compute.amazonaws.com:9092'],
                 value_serializer=lambda x: json.dumps(x, ensure_ascii=False).encode('utf-8')
             )
-            msg = {'nickname': user_name, 'message': message, 'time': time.strftime('%Y-%m-%d %H:%M:%S')}
-            producer.send('team4', value=msg)
+            msg = {'nickname': self.user_name, 'message': message, 'time': time.strftime('%Y-%m-%d %H:%M:%S')}
+            producer.send(self.chat_room, value=msg)
             producer.flush()  # 메시지 전송 완료
             producer.close()  # 프로듀서 종료
             
@@ -81,6 +91,8 @@ class ChatApp(App):
             self.exit()
 
 if __name__ == "__main__":
-    app = ChatApp()
+    chatroom = input("대화방명 : ")
+    username = input("사용자명 : ")
+    app = ChatApp(chat_room=chatroom, user_name=username)
     app.run()
 
