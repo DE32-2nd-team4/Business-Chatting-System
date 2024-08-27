@@ -76,4 +76,3 @@ if __name__ == "__main__":
 
     consumer_thread.start()
     producer_thread.start()
-
