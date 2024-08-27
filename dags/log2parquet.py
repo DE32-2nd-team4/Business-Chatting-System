@@ -32,10 +32,11 @@ with DAG(
     max_active_runs=1,
     max_active_tasks=3,
     description='movie_data_spark',
-    schedule_interval=timedelta(days=1),
-    start_date=datetime(2024, 8, 25),
+    schedule_interval='@hourly',
+    start_date=datetime(2024, 8, 26),
     catchup=True,
     tags=['logs','parquet'],
+
 ) as dag:
     start=EmptyOperator(task_id='start')
     end=EmptyOperator(task_id='end')     
@@ -43,14 +44,17 @@ with DAG(
     
     consumer = ConsumeFromTopicOperator(
         kafka_config_id="team4",
+        #kafka_config_id="local",
 		task_id="consumer",
-		topics=["Room1","Room2","Room3","team4-room1","team4-room2","team4"],
+		topics=["team4"],
+		#topics=["room1","room2","room3"],
         apply_function="consumer.fun_consumer",
+        #apply_function_kwargs={"prefix": "consumed:::"},
 		commit_cadence="end_of_operator",
-		max_messages=100,
-		max_batch_size=16
+        #commit_cadence="end_of_batch",
+		max_messages=15
+		#max_batch_size=3,
     )
-
 
     start >> consumer >> end
         
