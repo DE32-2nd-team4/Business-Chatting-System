@@ -4,6 +4,75 @@ import json
 import threading
 import logging
 import os
+import requests
+key = os.getenv('MOVIE_API_KEY')
+
+# 영화 제목 모를때
+movie_name_base_url=f"http://kobis.or.kr/kobisopenapi/webservice/rest/movie/searchMovieList.json?key={key}"
+# 영화 제목, 감독명, 배우명, 개봉일
+movie_info_base_url=f"http://www.kobis.or.kr/kobisopenapi/webservice/rest/movie/searchMovieInfo.json?key={key}"
+
+def chatbot(message):
+    apidict = {
+        'movieNm': ['제목', '이름', '영화제목', '영화이름'],
+        'genreNm': ['장르'],
+        'directors_peopleNm': ['감독이름', '감독명', '감독'],
+        'actors_peopleNm': ['배우이름', '배우명', '배우'],
+        'openStartDt': ['개봉일', '개봉년도', '개봉연도']
+    }
+
+    search_word = ''
+    msglist = message.split(' ')
+    command = ''
+    keyword = msglist[-1]
+    movie_cd = ''
+
+    # 검색어와 검색 키워드를 분리
+    for msg in msglist:
+        if msg != keyword:
+            search_word = search_word + msg + " "
+
+    for keys in apidict:
+        for keywords in apidict[keys]:
+            if keywords == keyword:
+                command = keys
+                # 감독명 keys 인 경우
+                if keys == "directors_peopleNm":
+                    url = movie_name_base_url + f"&directorNm={search_word.strip()}"
+                    url = movie_name_base_url + f"&directorNm={search_word.strip()}"
+                else:
+                    # 영화 이름으로 검색 후 영화 리스트 중에서 원하는 영화 선택, 영화 코드 찾기.
+                    url = movie_name_base_url + f"&movieNm={search_word.strip()}"
+                    movie_cd_r = requests.get(url)
+                    movie_cd_json = movie_cd_r.json()
+
+                    if len(movie_cd_json['movieListResult']['movieList']) != 1:
+                        return "정확히 어떤 영화를 찾으시나요? 영화 제목을 다시 확인해주세요."
+                    else:
+                        movie_cd = movie_cd_json['movieListResult']['movieList'][0]['movieCd']
+                        search_word = movie_cd_json['movieListResult']['movieList'][0]['movieNm']
+
+    if len(movie_cd) > 0:
+        info_url = movie_info_base_url + f"&movieCd={movie_cd}"
+        info_r = requests.get(info_url)
+        info_json = info_r.json()
+
+        movie_info = info_json['movieInfoResult']['movieInfo']
+
+        if command == 'genreNm':
+            return f"영화 \"{search_word}\"의 장르는 {movie_info['genres'][0]['genreNm']}입니다."
+        elif command == 'directors_peopleNm':
+            return f"영화 \"{search_word}\"의 감독은 {movie_info['directors'][0]['peopleNm']}입니다."
+        elif command == 'actors_peopleNm':
+            actor_list = ', '.join([f"{actor['peopleNm']} ({actor['cast']} 역)" for actor in movie_info['actors']])
+            return f"영화 \"{search_word}\"의 배우는 {actor_list}입니다."
+        elif command == 'openStartDt':
+            return f"영화 \"{search_word}\"의 개봉일은 {movie_info['openDt']}입니다."
+        elif command == 'movieNm':
+            return f"영화의 제목은 \"{search_word}\"입니다."
+    else:
+        return "해당 영화는 없습니다."
+
 
 def send_message():
     global username
@@ -31,6 +100,10 @@ def send_message():
         if message == "exit":
             producer.close()
             break
+        if message[0:4] == "@bot":
+            message = message[5:]
+            chatbot(message)
+
         m_message = {'nickname': username, 'message': message, 'time':time.time()}
         producer.send(chatroom, value=m_message)
         with open(log_file_path, 'a') as log_file:
