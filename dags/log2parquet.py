@@ -42,17 +42,17 @@ with DAG(
     
     
     consumer = ConsumeFromTopicOperator(
-        #kafka_config_id="team4",
-        kafka_config_id="local",
+        kafka_config_id="team4",
+        #kafka_config_id="local",
 		task_id="consumer",
 		#topics=["room1","room2","room3","room4","team4_room1"],
-		topics=["room1","room2","room3"],
+		topics=["Room1","Room2","Room3","team4-room1","team4-room2","team4"],
         apply_function="consumer.fun_consumer",
         #apply_function_kwargs={"prefix": "consumed:::"},
 		commit_cadence="end_of_operator",
         #commit_cadence="end_of_batch",
-		max_messages=2,
-		max_batch_size=2
+		max_messages=10,
+		max_batch_size=16
     )
 
     start >> consumer >> end
