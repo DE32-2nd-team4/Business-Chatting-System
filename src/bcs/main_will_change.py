@@ -4,6 +4,8 @@ import json
 import threading
 import logging
 import os
+
+# 이 밑에 부분 그냥 복사해서 붙여넣어주세요!
 def import_ip():
     try:
         with open('config/ip', 'r') as f:
@@ -29,8 +31,9 @@ def send_message():
     global username
     global chatroom
     
-    
+    # bootstrap_server 받는 함수
     address = import_ip()
+
     log_file_path = f"~/atmp/chatdata/{chatroom}/chat.log"
     log_file_path = os.path.expanduser(log_file_path)
     # 로그 파일 경로 (EC2 서버의 team4 폴더 아래 chatroom 폴더)
@@ -66,7 +69,10 @@ def send_message():
 def receive_message():
     global chatroom
     global username
+
+    # bootstrap_server 받는 함수
     address = import_ip()
+
     receiver = KafkaConsumer(
             bootstrap_servers=address,
             auto_offset_reset='earliest',
@@ -88,7 +94,10 @@ def receive_message():
     finally:
         receiver.close()
 
+
 def run():
+    # if '__name__' == '__main__'의 경우는
+    # pdm의 project.script에서 실핼하기 어렵습니다. 
     global username
     global chatroom
 
@@ -101,5 +110,3 @@ def run():
     consumer_thread.start()
     producer_thread.start()
 
-if __name__ == "__main__":
-    run()
