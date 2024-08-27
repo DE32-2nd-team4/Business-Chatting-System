@@ -21,4 +21,4 @@ test = [
 distribution = false
 
 [tool.pdm.scripts]
-BCS = "src.bcs.__main__:main"
+BCS = "bcs.__main__:main"
