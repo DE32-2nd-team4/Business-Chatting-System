@@ -1,29 +1,31 @@
+from kafka import KafkaProducer, KafkaConsumer
 import curses
 import threading
 import time
-from kafka import KafkaProducer, KafkaConsumer
 import json
 import os
+
+exit_event = threading.Event()
 
 def send_message(input_win, height, width, username, chatroom):
     # Kafka 프로듀서 초기화
     producer = KafkaProducer(
-            bootstrap_servers=['ec2-43-203-210-250.ap-northeast-2.compute.amazonaws.com:9092'],
-        value_serializer=lambda x: json.dumps(x).encode('utf-8')
+            #bootstrap_servers=['ec2-43-203-210-250.ap-northeast-2.compute.amazonaws.com:9092'],
+            bootstrap_servers=['localhost:9092'],
+            value_serializer=lambda x: json.dumps(x).encode('utf-8')
     )
 
-    # 입력 윈도우 생성
-
     try:
-        while True:
+        while not exit_event.is_set():
             input_win.clear()
             input_win.addstr(0, 0, "입력: ")
             input_win.refresh()
 
-            user_input = input_win.getstr().decode('utf-8')
+            user_input = input_win.getstr().decode('utf-8', errors='ignore')
 
             if user_input.lower() == 'exit':
-                producer.close()
+                print("Press <Ctrl+C>")
+                exit_event.set()
                 break
     
             # Kafka로 메시지 전송
@@ -32,28 +34,33 @@ def send_message(input_win, height, width, username, chatroom):
             producer.flush()  # 메시지 전송 완료
 
     except KeyboardInterrupt:
+        print("채팅 종료")
+        exit_event.set()
+    finally:
         producer.close()
-        return
-
+            
 def receive_message(output_win, height, width, username, chatroom):
     # Kafka 컨슈머 초기화
     consumer = KafkaConsumer(
-        bootstrap_servers=['ec2-43-203-210-250.ap-northeast-2.compute.amazonaws.com:9092'],
+        #bootstrap_servers=['ec2-43-203-210-250.ap-northeast-2.compute.amazonaws.com:9092'],
+        bootstrap_servers=['localhost:9092'],
         auto_offset_reset='earliest',
         value_deserializer=lambda x: json.loads(x.decode('utf-8'))
     )
     consumer.subscribe([chatroom])
 
     try:
-        for message in consumer:
-            data = message.value
-            output_win.addstr(f"{data['nickname']} >> {data['message']} | {data['time']}\n") 
-            output_win.refresh()
-    except KeyboardInterrupt:
-        print("채팅 종료")
-        consumer.close()
-        return
+        while not exit_event.is_set():
+            for message in consumer:
+                data = message.value
+                output_win.addstr(f"{data['nickname']} >> {data['message']} | {data['time']}\n") 
+                output_win.refresh()
         
+    except KeyboardInterrupt:
+        exit_event.set()
+    finally:
+        consumer.close()
+
 stdscr = curses.initscr()
 stdscr.clear()
 
