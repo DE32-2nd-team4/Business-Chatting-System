@@ -21,7 +21,8 @@ def send_message():
     if not os.path.exists(log_file_path):
         open(log_file_path, 'a').close()  # 파일 생성
     producer = KafkaProducer (
-        bootstrap_servers=['ec2-43-203-210-250.ap-northeast-2.compute.amazonaws.com:9092'],
+        #bootstrap_servers=['ec2-43-203-210-250.ap-northeast-2.compute.amazonaws.com:9092'],
+        bootstrap_servers=['localhost:9092'],
         value_serializer=lambda x:json.dumps(x).encode('utf-8'),
         )
 
@@ -45,7 +46,8 @@ def receive_message():
     global chatroom
     global username
     receiver = KafkaConsumer(
-            bootstrap_servers='ec2-43-203-210-250.ap-northeast-2.compute.amazonaws.com:9092',
+            #bootstrap_servers=['ec2-43-203-210-250.ap-northeast-2.compute.amazonaws.com:9092'],
+            bootstrap_servers=['localhost:9092'],
             auto_offset_reset='earliest',
             value_deserializer=lambda x: json.loads(x.decode('utf-8')),
             )
