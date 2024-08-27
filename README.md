@@ -1,6 +1,7 @@
 # DE32-2rd_team4
 # Businness Chatting System
-<Need add Picture>
+![image](https://github.com/user-attachments/assets/b1256547-8d88-43e2-96d9-96cd315286c5)
+
 
 ## Introduce
 <Need add Introduce text>
