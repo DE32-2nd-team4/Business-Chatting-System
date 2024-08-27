@@ -10,8 +10,8 @@ exit_event = threading.Event()
 def send_message(input_win, height, width, username, chatroom):
     # Kafka 프로듀서 초기화
     producer = KafkaProducer(
-            #bootstrap_servers=['ec2-43-203-210-250.ap-northeast-2.compute.amazonaws.com:9092'],
-            bootstrap_servers=['localhost:9092'],
+            bootstrap_servers=['ec2-43-203-210-250.ap-northeast-2.compute.amazonaws.com:9092'],
+            #bootstrap_servers=['localhost:9092'],
             value_serializer=lambda x: json.dumps(x).encode('utf-8')
     )
 
@@ -42,8 +42,8 @@ def send_message(input_win, height, width, username, chatroom):
 def receive_message(output_win, height, width, username, chatroom):
     # Kafka 컨슈머 초기화
     consumer = KafkaConsumer(
-        #bootstrap_servers=['ec2-43-203-210-250.ap-northeast-2.compute.amazonaws.com:9092'],
-        bootstrap_servers=['localhost:9092'],
+        bootstrap_servers=['ec2-43-203-210-250.ap-northeast-2.compute.amazonaws.com:9092'],
+        #bootstrap_servers=['localhost:9092'],
         auto_offset_reset='earliest',
         value_deserializer=lambda x: json.loads(x.decode('utf-8'))
     )
