@@ -28,8 +28,8 @@ class ChatApp(App):
     def start_consumer(self):
         # Kafka consumer 초기화 및 메시지 수신
         self.consumer = KafkaConsumer(
-            bootstrap_servers=['localhost:9092'],
-            #bootstrap_servers=['ec2-43-203-210-250.ap-northeast-2.compute.amazonaws.com:9092'],
+            #bootstrap_servers=['localhost:9092'],
+            bootstrap_servers=['ec2-43-203-210-250.ap-northeast-2.compute.amazonaws.com:9092'],
             auto_offset_reset='earliest',
             value_deserializer=lambda x: json.loads(x.decode('utf-8'))
         )
@@ -64,8 +64,8 @@ class ChatApp(App):
         if message.strip():
             # Kafka producer 초기화 및 메시지 전송
             producer = KafkaProducer(
-                bootstrap_servers=['localhost:9092'],
-                #bootstrap_servers=['ec2-43-203-210-250.ap-northeast-2.compute.amazonaws.com:9092'],
+                #bootstrap_servers=['localhost:9092'],
+                bootstrap_servers=['ec2-43-203-210-250.ap-northeast-2.compute.amazonaws.com:9092'],
                 value_serializer=lambda x: json.dumps(x, ensure_ascii=False).encode('utf-8')
             )
             msg = {'nickname': self.user_name, 'message': message, 'time': time.strftime('%Y-%m-%d %H:%M:%S')}
