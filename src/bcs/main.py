@@ -149,6 +149,6 @@ if __name__ == "__main__":
         else:
             print("사용자명에 특수문자가 포함되어 있습니다. 다시 입력해주세요.")
 
+
     app = ChatApp(chat_room=chatroom, user_name=username, server=server)
     app.run()
-
