@@ -27,11 +27,10 @@ def import_ip():
         exit(1)
 
 def moduleListener():
-    #KafkaConsumer로 특정 topic을 듣고
-    #system bot으로 airflow상에서 던져지는 메세지를 들어야하므로
+    #KafkaConsumer로 특정 topic에서 발생되는 메세지를 듣고 
+    #들은 메세지를 producer메소드를 활용해 메세지 전송
     #Airflow에서 Producing하는 메세지는 topic를 'team4_system'으로 지정
     #즉, 본 Listener에서 듣는 topic도 'team4_system'으로 지정
-    #이렇게 들은 메세지를 리턴함.
 
     address = import_ip()
     print(f"address import complete : {address}")
@@ -69,4 +68,5 @@ def moduleSpeaker(message):
     print(f"message ready to send {topic} : {m_message}")
     producer.send(topic, value=m_message)
     producer.flush()
-    
+ 
+ moduleListener()
