@@ -47,7 +47,6 @@ def main():
         # bot 실행
         processes = []
         # 자식 프로세스에서 사용할 파일 디스크립터를 닫기 위해 사용
-        devnull = open(os.devnull, 'w')
         for bot_file in ["src/bcs/system_bot.py", "src/bcs/aleam_bot.py", "src/bcs/movie_bot.py"]:
             process = subprocess.Popen(["python", bot_file])
             processes.append(process)
