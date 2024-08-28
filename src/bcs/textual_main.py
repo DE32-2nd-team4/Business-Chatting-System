@@ -27,7 +27,6 @@ class ChatApp(App):
         self.consumer_thread = threading.Thread(target=self.start_consumer, daemon=True)
         self.consumer_thread.start()
 
-        # producer 생
         self.producer = KafkaProducer(
             bootstrap_servers=[self.server],
             value_serializer=lambda x: json.dumps(x, ensure_ascii=False).encode('utf-8')
@@ -93,8 +92,8 @@ class ChatApp(App):
     async def on_unmount(self) -> None:
         if hasattr(self, 'consumer'):
             self.consumer.close()
-        if hasattr(self, 'consumer_thread'):
-            self.consumer_thread.join()
+        #if hasattr(self, 'consumer_thread'):
+        #    self.consumer_thread.join()
 
         msg = {
             'nickname': "sys",
@@ -103,9 +102,12 @@ class ChatApp(App):
         }
         self.producer.send(self.chat_room, value=msg)
         self.producer.flush()  # 메시지 전송 완료
+        self.producer.close()
 
-        if hasattr(self, 'producer'):
-            self.producer.close()
+        #if hasattr(self, 'consumer'):
+        #    self.consumer.close()
+        if hasattr(self, 'consumer_thread'):
+            self.consumer_thread.join()
 
     def run(self) -> None:
         try:
