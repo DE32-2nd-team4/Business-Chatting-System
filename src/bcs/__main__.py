@@ -8,7 +8,7 @@ def main():
     parser.add_argument('-c', '--chat', action='store_true', help='src/bcs/main.py 실행')
     parser.add_argument('-a', '--audit', action='store_true', help='Zeppelin 실행 및 audit/data 폴더 열기')
     parser.add_argument('-i', '--ipconfig', action='store_true', help='config/ip 파일 열기')
-    parser.add_augument('-b', '--bot', action='store_true', help='모든 봇 시작')
+    parser.add_argument('-b', '--bot', action='store_true', help='모든 봇 시작')
     args = parser.parse_args()
     if args.help:
         print("""
