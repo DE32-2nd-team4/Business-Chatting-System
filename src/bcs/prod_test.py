@@ -27,22 +27,13 @@ class ChatApp(App):
         self.consumer_thread = threading.Thread(target=self.start_consumer, daemon=True)
         self.consumer_thread.start()
 
-        # producer 생
-        self.producer = KafkaProducer(
-            bootstrap_servers=[self.server],
-            value_serializer=lambda x: json.dumps(x, ensure_ascii=False).encode('utf-8')
+    def start_producer(self):
+        producer = KafkaProducer(
+                bootstrap_servers=[self.server],
+                value_serializer=lambda x: json.dumps(x, ensure_ascii=False).encode('utf-8')
         )
+        return producer
 
-        msg = {
-                'nickname': "sys",
-                'message': f"--- {self.user_name}님이 입장하였습니다. ---",
-                'time': time.strftime('%Y-%m-%d %H:%M:%S')
-        }
-
-        self.producer.send(self.chat_room, value=msg)
-        self.producer.flush()  # 메시지 전송 완료
-        #producer.close()  # 프로듀서 종료
-        
     def start_consumer(self):
         # Kafka consumer 초기화 및 메시지 수신
         self.consumer = KafkaConsumer(
@@ -65,9 +56,7 @@ class ChatApp(App):
         # 메시지 추가
         log = self.query_one(RichLog)
 
-        if data['nickname'] == "sys":
-            log.write(f"{data['message']}")
-        elif data['nickname'] == self.user_name:
+        if data['nickname'] == self.user_name:
             log.write(f"[{data['time']}] [red]{data['nickname']}[/] {data['message']}")
         elif data['nickname'].startswith('@'):
             log.write(f"[{data['time']}] [blue]🤖 {data['nickname']}[/] {data['message']}")
@@ -80,36 +69,25 @@ class ChatApp(App):
         input_widget = self.query_one(Input)
         message = input_widget.value
         if message.strip():
-            msg = {
-                    'nickname': self.user_name,
-                    'message': message,
-                    'time': time.strftime('%Y-%m-%d %H:%M:%S')
-            }
-            self.producer.send(self.chat_room, value=msg)
-            self.producer.flush()  # 메시지 전송 완료
+            # Kafka producer 초기화 및 메시지 전송
+            producer = start_producer() #KafkaProducer(
+                #bootstrap_servers=[self.server],
+                #value_serializer=lambda x: json.dumps(x, ensure_ascii=False).encode('utf-8')
+            #)
+            msg = {'nickname': self.user_name, 'message': message, 'time': time.strftime('%Y-%m-%d %H:%M:%S')}
+            producer.send(self.chat_room, value=msg)
+            producer.flush()  # 메시지 전송 완료
+            producer.close()  # 프로듀서 종료
             
             # 입력 필드 초기화
             input_widget.value = ""
 
     async def on_unmount(self) -> None:
-        try:
-            msg = {
-                'nickname': "sys",
-                'message': f"--- {self.user_name}님이 퇴장하였습니다. ---",
-                'time': time.strftime('%Y-%m-%d %H:%M:%S')
-            }
-            self.producer.send(self.chat_room, value=msg)
-            self.producer.flush()  # 메시지 전송 완료
-        except Exception as e:
-            print(f"종료 중 에러 발생: {e}")
-
-        finally:
-            if hasattr(self, 'producer'):
-                self.producer.close()
-            if hasattr(self, 'consumer'):
-                self.consumer.close()
-            if hasattr(self, 'consumer_thread'):
-                self.consumer_thread.join()
+        # 종료 시 Kafka consumer 종료 및 스레드 종료
+        if hasattr(self, 'consumer'):
+            self.consumer.close()
+        if hasattr(self, 'consumer_thread'):
+            self.consumer_thread.join()
 
     def run(self) -> None:
         try:
