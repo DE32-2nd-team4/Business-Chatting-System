@@ -1,7 +1,7 @@
+from kafka import KafkaProducer, KafkaConsumer
 from textual.app import App, ComposeResult
 from textual.widgets import Input, RichLog, Header
 from textual import on
-from kafka import KafkaProducer, KafkaConsumer
 import json
 import asyncio
 import threading
@@ -64,7 +64,7 @@ class ChatApp(App):
         log = self.query_one(RichLog)
 
         if data['nickname'] == "sys":
-            log.write(f"{data['message']}")
+            log.write(f"[#999999]{data['message']}[/]")
         elif data['nickname'] == self.user_name:
             log.write(f"[{data['time']}] [red]{data['nickname']}[/] {data['message']}")
         elif data['nickname'].startswith('@'):
@@ -92,8 +92,6 @@ class ChatApp(App):
     async def on_unmount(self) -> None:
         if hasattr(self, 'consumer'):
             self.consumer.close()
-        #if hasattr(self, 'consumer_thread'):
-        #    self.consumer_thread.join()
 
         msg = {
             'nickname': "sys",
@@ -102,10 +100,10 @@ class ChatApp(App):
         }
         self.producer.send(self.chat_room, value=msg)
         self.producer.flush()  # 메시지 전송 완료
-        self.producer.close()
 
-        #if hasattr(self, 'consumer'):
-        #    self.consumer.close()
+        if hasattr(self, 'producer'):
+            self.producer.close()
+
         if hasattr(self, 'consumer_thread'):
             self.consumer_thread.join()
 
@@ -116,12 +114,32 @@ class ChatApp(App):
             print("채팅을 종료합니다...")
             self.exit()
 
+def import_ip(): 
+    try:   
+        with open('config/ip', 'r') as f: 
+            config_lines = f.readlines()  
+            bootstrap_servers = ""       
+            for line in config_lines:   
+                if line.startswith("server address:"):  
+                    bootstrap_servers = line.split(":")[1].strip().replace("'", "")
+                elif line.startswith("port:"):
+                    port = line.split(":")[1].strip().replace("'", "")
+                    bootstrap_servers += ":" + port
+                return bootstrap_servers
+
+    except FileNotFoundError:     
+        print("Error: config/ip 파일을 찾을 수 없습니다.")      
+        exit(1)     
+    except Exception as e:    
+        print(f"Error: config/ip 파일을 읽는 중 오류가 발생했습니다: {e}")                          
+        exit(1)
+
 def is_valid_username(username):
     # 정규 표현식으로 특수문자를 확인 (알파벳과 숫자만 허용)
-    return re.match(r'^[a-zA-Z0-9]+$', username) is not None
+    return re.match(r'^[a-zA-Z0-9가-힣]+$', username) is not None
 
 if __name__ == "__main__":
-    server = input("서버주소 : ")
+    server = import_ip() 
     chatroom = input("대화방명 : ")
     while True:
         username = input("사용자명 : ")
