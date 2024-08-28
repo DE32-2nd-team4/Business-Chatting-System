@@ -55,7 +55,7 @@ def send_message():
         if message == "exit":
             producer.close()
             break
-        m_message = {'nickname': username, 'message': message, 'time':time.time()}
+        m_message = {'nickname': username, 'message': message, 'time':time.strftime('%Y-%m-%d %H:%M:%S')}
         producer.send(chatroom, value=m_message)
         with open(log_file_path, 'a') as log_file:
             log_file.write(json.dumps(m_message) + '\n')
