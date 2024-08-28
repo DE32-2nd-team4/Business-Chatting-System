@@ -6,6 +6,7 @@ import json
 import asyncio
 import threading
 import time
+import re
 
 class ChatApp(App):
     def __init__(self, user_name: str, chat_room: str, **kwargs) -> None:
@@ -90,9 +91,20 @@ class ChatApp(App):
             print("채팅을 종료합니다...")
             self.exit()
 
+def is_valid_username(username):
+    # 정규 표현식으로 특수문자를 확인 (알파벳과 숫자만 허용)
+    return re.match(r'^[a-zA-Z0-9]+$', username) is not None
+
+
 if __name__ == "__main__":
     chatroom = input("대화방명 : ")
-    username = input("사용자명 : ")
+    while True:
+        username = input("사용자명 : ")
+        if is_valid_username(username):
+            break
+        else:
+            print("사용자명에 특수문자가 포함되어 있습니다. 다시 입력해주세요.")
+
     app = ChatApp(chat_room=chatroom, user_name=username)
     app.run()
 
