@@ -46,15 +46,10 @@ def main():
     elif args.bot:
         # bot 실행
         processes = []
+        # 자식 프로세스에서 사용할 파일 디스크립터를 닫기 위해 사용
+        devnull = open(os.devnull, 'w')
         for bot_file in ["src/bcs/system_bot.py", "src/bcs/aleam_bot.py", "src/bcs/movie_bot.py"]:
-            process = subprocess.Popen(
-                    ["python", bot_file],
-                    stdout=devnull,  # 표준 출력을 닫기
-                    stderr=devnull,  # 표준 오류 출력을 닫기
-                    stdin=devnull,   # 표준 입력을 닫기
-                    close_fds=True,  # 부모 프로세스의 파일 디스크립터를 닫기
-                    preexec_fn=os.setsid  # 새로운 세션을 생성하여 독립적으로 실행되도록 설정
-                    )
+            process = subprocess.Popen(["python", bot_file])
             processes.append(process)
             print("bot 실행 완료")
 
