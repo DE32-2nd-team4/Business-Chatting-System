@@ -45,10 +45,14 @@ def main():
         subprocess.run(["vim", "config/ip"])
     elif args.bot:
         # bot 실행
-        subprocess.run(["python", "src/bcs/system_bot.py"])
-        subprocess.run(["python", "src/bcs/aleam_bot.py"])
-        subprocess.run(["python", "src/bcs/movie_bot.py"])
+        processes = []
+        for bot_file in ["src/bcs/system_bot.py", "src/bcs/aleam_bot.py", "src/bcs/movie_bot.py"]:
+            process = subprocess.Popen(["python", bot_file])
+            processes.append(process)
 
+        # 필요하다면, 모든 백그라운드 프로세스가 종료될 때까지 기다릴 수 있습니다.
+        for process in processes:
+            process.wait() 
 
 if __name__ == '__main__':
     main()
