@@ -7,7 +7,10 @@ import os
 import requests
 import sys
 
+exit_event = threading.Event()
 global_command = {}
+pending_command = {}
+
 bot_nic = ""
 def getkey():
     key = "82ca741a2844c5c180a208137bb92bd7"
@@ -44,7 +47,7 @@ def import_ip():
         exit(1)
 
 def chatbot(message):
-    global global_command
+    global global_command, pending_command
     movie_name_base_url = getMovieNameBaseUrl()
     movie_info_base_url = getMovieInfoBaseUrl()
 
@@ -83,7 +86,7 @@ def chatbot(message):
                 # api 호출 에러
 
                 errcode = "320099"
-                if movie_cd_json['faultInfo']['errorCode'] == errcode:
+                if 'faultInfo' in movie_cd_json and movie_cd_json['faultInfo']['errorCode'] == errcode:
                     global_command['bot_nic'] = [f"{bot_nic}님, 현재 영화호출 api에 장애가 있습니다. 나중에 다시 시도해 주세요"]
                     send_message()
 
@@ -94,7 +97,8 @@ def chatbot(message):
                     cnt = 1
                     movies_info_list = '\n'.join([f"{cnt + i}. 제목: {movie['movieNm']}, 장르: {movie['repGenreNm']}, 국가: {movie['repNationNm']}" for i, movie in enumerate(movies_list)])
                     global_command[f'bot_nic'] = [f"{bot_nic}님, 정확히 어떤 영화를 찾으시나요? 번호를 입력해주세요. ex) @bot 숫자\n\n {movies_info_list}", search_word, command, movie_cd_list]
-                    
+                    # 여기서는 global_command 대신 pending_command에 데이터를 저장
+                    pending_command[f'{bot_nic}'] = [search_word, command, movie_cd_list, bot_nic]
                     send_message()
                 else:
                     movie_cd = movie_cd_json['movieListResult']['movieList'][0]['movieCd']
@@ -126,7 +130,7 @@ def chatbot(message):
     send_message()
 
 def chatbotFindMovie(to_bot_data2):
-    global global_command
+    global global_command, pending_command
     global bot_nic
 
     bot_topic = to_bot_data2[0]
@@ -180,15 +184,20 @@ def send_message():
         value_serializer=lambda x:json.dumps(x, ensure_ascii=False).encode('utf-8'),
         )
 
-
-    while(True):
-        if len(global_command) >= 1:
+    try:
+        while not exit_event.is_set():
+        #while(True):
             for nic in list(global_command):
                 message = global_command[nic][0]  # 챗봇 메시지 전송
                 m_message = {'nickname': '@bot', 'message': message, 'time':time.strftime('%Y-%m-%d %H:%M:%S')}
                 producer.send('team4', value=m_message)
                 del global_command[nic]
                 producer.flush()  # 메시지 전송 완료
+    except KeyboardInterrupt:
+        print("채팅 종료")
+        exit_event.set()
+    finally:
+        producer.close()
 
 def receive_message():
     global global_command
@@ -205,19 +214,29 @@ def receive_message():
     print("Listener ready")
     print(f"Listen at {chatroom}, {server_address}")
 
-    for message in receiver:
-        data = message.value
-        print(f"message receive : {data['message']}")
-        if data['message'][:4] == "@bot":
-            message = data['message'][5:]
-            to_bot_data = [''.join(chatroom), data['nickname'], message]
-            print(f"message receive : {to_bot_data}")
-            chatbot(to_bot_data)
+    try:
+        for message in receiver:
+            data = message.value
+            print(f"message receive : {data['message']}")
+            if data['message'][:4] == "@bot":
+                message = data['message'][5:]
+                to_bot_data = [''.join(chatroom), data['nickname'], message]
+                print(f"message receive : {to_bot_data}")
+                chatbot(to_bot_data)
 
-        elif data['message'][:4] == "@bot" and is_integer(data['message'][5:]):
-            m, search_word, command, movie_cd_list = global_command
-            real_movie_cd = movie_cd_list[int(data['message'][5:]) - 1]
-            to_bot_data2 = [''.join(chatroom), data['nickname'], real_movie_cd, command]
-            chatbotFindMovie(to_bot_data)
+            elif data['message'][:4] == "@bot" and is_integer(data['message'][5:]):
+                m, search_word, command, movie_cd_list, bot_nic = pending_command[f'{bot_nic}']
+                real_movie_cd = movie_cd_list[int(data['message'][5:]) - 1]
+                to_bot_data2 = [''.join(chatroom), bot_nic, real_movie_cd, command]
+                chatbotFindMovie(to_bot_data2)
+    except KeyboardInterrupt:
+        exit_event.set()
+    finally:
+        receiver.close()
 
-receive_message()
+th1 = threading.Thread(target=receive_message)
+th2 = threading.Thread(target=send_message)
+th1.start()
+th2.start()
+th1.join()
+th2.join()
