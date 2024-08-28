@@ -64,7 +64,7 @@ def moduleSpeaker(message):
         )
     message_i = message['message'][4:]
     time = message['time']
-    m_message = {'nickname': '@systembot', 'message': message_i, 'time':time}
+    m_message = {'nickname': '@aleambot', 'message': message_i, 'time':time}
     print(f"message ready to send {topic} : {m_message}")
     producer.send(topic, value=m_message)
     producer.flush()
