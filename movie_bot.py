@@ -7,12 +7,12 @@ import os
 import requests
 import sys
 
-global_command = dict()
-pending_command = dict()
+global_command = {}
+pending_command = {}
+
 bot_nic = ""
 def getkey():
-    #key = "82ca741a2844c5c180a208137bb92bd7"
-    key = "27868e75909908b7ea9b1918770d4541"
+    key = "82ca741a2844c5c180a208137bb92bd7"
     return key
 
 def getMovieNameBaseUrl():
@@ -47,6 +47,7 @@ def import_ip():
 
 def chatbot(message):
     global global_command, pending_command
+
     movie_name_base_url = getMovieNameBaseUrl()
     movie_info_base_url = getMovieInfoBaseUrl()
 
@@ -85,6 +86,7 @@ def chatbot(message):
                 # api 호출 에러
 
                 errcode = "320099"
+                # 'faultInfo' 키가 존재하는지 먼저 확인
                 if 'faultInfo' in movie_cd_json and movie_cd_json['faultInfo']['errorCode'] == errcode:
                     global_command['bot_nic'] = [f"{bot_nic}님, 현재 영화호출 api에 장애가 있습니다. 나중에 다시 시도해 주세요"]
                     send_message()
@@ -95,8 +97,10 @@ def chatbot(message):
                     movie_cd_list = [movie['movieCd'] for movie in movies_list]
                     cnt = 1
                     movies_info_list = '\n'.join([f"{cnt + i}. 제목: {movie['movieNm']}, 장르: {movie['repGenreNm']}, 국가: {movie['repNationNm']}" for i, movie in enumerate(movies_list)])
-                    global_command[f'bot_nic'] = [f"{bot_nic}님, 정확히 어떤 영화를 찾으시나요? 번호를 입력해주세요. ex) @bot 숫자\n\n {movies_info_list}", search_word, command, movie_cd_list]
+                    global_command[f'bot_nic'] = [f"{bot_nic}님, 정확히 어떤 영화를 찾으시나요? 번호를 입력해주세요. ex) @bot 숫자\n\n {movies_info_list}"]
+                    # 여기서는 global_command 대신 pending_command에 데이터를 저장
                     pending_command[f'{bot_nic}'] = [search_word, command, movie_cd_list, bot_nic]
+                    print(pending_command)
                     send_message()
                 else:
                     movie_cd = movie_cd_json['movieListResult']['movieList'][0]['movieCd']
@@ -106,14 +110,7 @@ def chatbot(message):
         info_url = movie_info_base_url + f"&movieCd={movie_cd}"
         info_r = requests.get(info_url)
         info_json = info_r.json()
-
-        # api 호출 에러
-        errcode = "320099"
-        if 'faultInfo' in movie_cd_json and movie_cd_json['faultInfo']['errorCode'] == errcode:
-            global_command['bot_nic'] = [f"{bot_nic}님, 현재 영화호출 api에 장애가 있습니다. 나중에 다시 시도해 주세요"]
-            send_message()
-        else:
-            movie_info = info_json['movieInfoResult']['movieInfo']
+        movie_info = info_json['movieInfoResult']['movieInfo']
 
         if command == 'genreNm':
             global_command[f'bot_nic'] = [f"{bot_nic}님, 영화 \"{search_word}\"의 장르는 {movie_info['genres'][0]['genreNm']}입니다."]
@@ -130,20 +127,21 @@ def chatbot(message):
         elif command == 'movieNm':
             global_command[f'bot_nic'] = [f"{bot_nic}님, 영화의 제목은 \"{search_word}\"입니다."]
     else:
-        global_command[f'bot_nic'] = [f"{bot_nic}님, 해당 영화는 없습니다."]
+        global_command[f'bot_nic'] = ["{bot_nic}님, 해당 영화는 없습니다."]
 
     send_message()
 
 def chatbotFindMovie(to_bot_data2):
-    global global_command, pending_command
+    global global_command
     global bot_nic
 
     bot_topic = to_bot_data2[0]
     bot_nic = to_bot_data2[1]
-    real_movie_cd = to_bot_data2[2]
-    command = to_bot_data2[3]
+    bot_message = to_bot_data2[2]
+    real_movie_cd = to_bot_data2[3]
+    command = to_bot_data2[4]
 
-    find_movie_url = getMovieInfoBaseUrl() + f"&movieCd={real_movie_cd}"
+    find_movie_url = movie_info_base_url + f"&movieCd={real_movie_cd}"
     find_movie_r = requests.get(find_movie_url)
     find_movie_json = find_movie_r.json()
 
@@ -188,17 +186,18 @@ def send_message():
         value_serializer=lambda x:json.dumps(x, ensure_ascii=False).encode('utf-8'),
         )
 
+
     while(True):
-        for nic in list(global_command):
-            message = global_command[nic][0]  # 챗봇 메시지 전송
-            m_message = {'nickname': '@bot', 'message': message, 'time':time.strftime('%Y-%m-%d %H:%M:%S')}
-            producer.send('team4', value=m_message)
-            del global_command[nic]
-            producer.flush()  # 메시지 전송 완료
-            receive_message()
+        if len(global_command) >= 1:
+            for nic in list(global_command):
+                message = global_command[nic][0]  # 챗봇 메시지 전송
+                m_message = {'nickname': '@bot', 'message': message, 'time':time.strftime('%Y-%m-%d %H:%M:%S')}
+                producer.send('team4', value=m_message)
+                del global_command[nic]
+                producer.flush()  # 메시지 전송 완료
 
 def receive_message():
-    global global_command, pending_command, bot_nic
+    global global_command, pending_command
     chatroom = ['team4']
     server_address = import_ip()
 
@@ -211,22 +210,25 @@ def receive_message():
     receiver.subscribe(chatroom)
     print("Listener ready")
     print(f"Listen at {chatroom}, {server_address}")
+
     for message in receiver:
         data = message.value
         print(f"message receive : {data['message']}")
         if data['message'][:4] == "@bot":
-            if is_integer(data['message'][5:]):
-                #print(pending_command)
+            if len(data['message']) > 5 and is_integer(data['message'][5:]):
+                print(pending_command)
+                # 숫자가 포함된 메시지 처리
                 search_word, command, movie_cd_list, bot_nic = pending_command[data['nickname']]
                 real_movie_cd = movie_cd_list[int(data['message'][5:]) - 1]
-                print(real_movie_cd)
-                print(command)
                 to_bot_data2 = [''.join(chatroom), data['nickname'], real_movie_cd, command]
                 chatbotFindMovie(to_bot_data2)
+                del pending_command[data['nickname']]  # 명령어 완료 후 제거
             else:
-                message = data['message'][5:]
-                to_bot_data = [''.join(chatroom), data['nickname'], message]
+                # 일반 메시지 처리
+                to_bot_data = [''.join(chatroom), data['nickname'], data['message'][5:]]
                 print(f"message receive : {to_bot_data}")
                 chatbot(to_bot_data)
-
-receive_message()
+                # chatbot 호출 후 필요한 경우 global_command 업데이트
+                if data['nickname'] in global_command:
+                    del global_command[data['nickname']]  # 처리 후 삭제
+threading.Thread(target=receive_message).start()
