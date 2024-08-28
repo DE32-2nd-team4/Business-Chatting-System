@@ -114,29 +114,30 @@ class ChatApp(App):
             print("채팅을 종료합니다...")
             self.exit()
 
-def import_ip(): 
-    try:   
-        with open('config/ip', 'r') as f: 
-            config_lines = f.readlines()  
-            bootstrap_servers = ""       
-            for line in config_lines:   
-                if line.startswith("server address:"):  
-                    bootstrap_servers = line.split(":")[1].strip().replace("'", "")
-                elif line.startswith("port:"):
-                    port = line.split(":")[1].strip().replace("'", "")
-                    bootstrap_servers += ":" + port
-                return bootstrap_servers
-
-    except FileNotFoundError:     
-        print("Error: config/ip 파일을 찾을 수 없습니다.")      
-        exit(1)     
-    except Exception as e:    
-        print(f"Error: config/ip 파일을 읽는 중 오류가 발생했습니다: {e}")                          
-        exit(1)
-
 def is_valid_username(username):
     # 정규 표현식으로 특수문자를 확인 (알파벳과 숫자만 허용)
     return re.match(r'^[a-zA-Z0-9가-힣]+$', username) is not None
+
+def import_ip():
+    try:
+        with open('config/ip', 'r') as f:
+            config_lines = f.readlines()
+            bootstrap_servers = ""
+
+            for line in config_lines:
+                if line.startswith("server address:"):
+                    bootstrap_servers = line.split(":")[1].strip().replace("'", "")
+                elif line.startswith("port:"):
+                    port = line.split(":")[1].strip().replace("'", "") 
+                    bootstrap_servers += ":" + port
+            return bootstrap_servers
+
+    except FileNotFoundError:
+        print("Error: config/ip 파일을 찾을 수 없습니다.")
+        exit(1)
+    except Exception as e:
+        print(f"Error: config/ip 파일을 읽는 중 오류가 발생했습니다: {e}")
+        exit(1)
 
 if __name__ == "__main__":
     server = import_ip() 
