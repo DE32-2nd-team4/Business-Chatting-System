@@ -16,7 +16,7 @@ def getkey():
 def getMovieNameBaseUrl():
     key = getkey()
     movie_name_base_url=f"http://kobis.or.kr/kobisopenapi/webservice/rest/movie/searchMovieList.json?key={key}"
-    retrun movie_name_base_url
+    return movie_name_base_url
 
 def getMovieInfoBaseUrl():
     key = getkey()
@@ -71,9 +71,6 @@ def chatbot(message):
     for msg in msglist:
         if msg != keyword:
             search_word = search_word + msg + " "
-    print("검색 키워드 입니다")
-    print(search_word)
-    print("\n ****************")
 
     for keys in apidict:
         for keywords in apidict[keys]:
@@ -188,7 +185,7 @@ def send_message():
 
 def receive_message():
     global global_command
-    topic = ['team4']
+    chatroom = ['team4']
     server_address = import_ip()
 
     receiver = KafkaConsumer(
@@ -198,13 +195,16 @@ def receive_message():
             value_deserializer=lambda x: json.loads(x.decode('utf-8')),
             )
     receiver.subscribe(chatroom)
+    print("Listener ready")
+    print(f"Listen at {chatroom}, {server_address}")
 
     for message in receiver:
         data = message.value
+        print(f"message receive : {data['message']}")
         if data['message'][:4] == "@bot":
-             message = data['message'][5:]
-                #chatbot start
+            message = data['message'][5:]
             to_bot_data = [''.join(chatroom), data['nickname'], message]
+            print(f"message receive : {to_bot_data}")
             chatbot(to_bot_data)
 
         elif data['message'][:4] == "@bot" and is_integer(data['message'][5:]):
