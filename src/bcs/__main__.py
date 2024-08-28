@@ -8,6 +8,7 @@ def main():
     parser.add_argument('-c', '--chat', action='store_true', help='src/bcs/main.py 실행')
     parser.add_argument('-a', '--audit', action='store_true', help='Zeppelin 실행 및 audit/data 폴더 열기')
     parser.add_argument('-i', '--ipconfig', action='store_true', help='config/ip 파일 열기')
+    parser.add_augument('-b', '--bot', action='store_true', help='모든 봇 시작')
     args = parser.parse_args()
     if args.help:
         print("""
@@ -27,6 +28,7 @@ def main():
                  -c, --chat     : Enter chatting system
                  -a, --audit    : Enter chat audit system
                  -i, --ipconfig : Open config ip file
+                 -b, --bot      : Start bot
         
         
         
@@ -41,6 +43,11 @@ def main():
     elif args.ipconfig:
         # config/ip 파일 열기 로직 추가
         subprocess.run(["vim", "config/ip"])
+    elif args.bot:
+        # bot 실행
+        subprocess.run(["python", "src/bcs/system_bot.py"])
+        subprocess.run(["python", "src/bcs/aleam_bot.py"])
+        subprocess.run(["python", "src/bcs/movie_bot.py"])
 
 
 if __name__ == '__main__':
