@@ -69,4 +69,5 @@ def moduleSpeaker(message):
     producer.send(topic, value=m_message)
     producer.flush()
  
- moduleListener()
+
+moduleListener()
