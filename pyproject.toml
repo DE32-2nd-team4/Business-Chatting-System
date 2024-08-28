@@ -20,4 +20,10 @@ test = [
     "pytest>=8.3.2",
 ]
 [tool.pdm]
-distribution = false
+distribution = true
+
+[project.scripts]
+bcs = 'bcs.__main__:main'
+
+
+
