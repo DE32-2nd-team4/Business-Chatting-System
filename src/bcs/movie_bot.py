@@ -83,7 +83,7 @@ def chatbot(message):
                 # api 호출 에러
 
                 errcode = "320099"
-                if movie_cd_json['errorCode'] == errcode:
+                if movie_cd_json['faultInfo']['errorCode'] == errcode:
                     global_command['bot_nic'] = [f"{bot_nic}님, 현재 영화호출 api에 장애가 있습니다. 나중에 다시 시도해 주세요"]
                     send_message()
 
