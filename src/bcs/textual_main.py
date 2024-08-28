@@ -41,7 +41,6 @@ class ChatApp(App):
 
         self.producer.send(self.chat_room, value=msg)
         self.producer.flush()  # 메시지 전송 완료
-        #producer.close()  # 프로듀서 종료
         
     def start_consumer(self):
         # Kafka consumer 초기화 및 메시지 수신
@@ -92,24 +91,21 @@ class ChatApp(App):
             input_widget.value = ""
 
     async def on_unmount(self) -> None:
-        try:
-            msg = {
-                'nickname': "sys",
-                'message': f"--- {self.user_name}님이 퇴장하였습니다. ---",
-                'time': time.strftime('%Y-%m-%d %H:%M:%S')
-            }
-            self.producer.send(self.chat_room, value=msg)
-            self.producer.flush()  # 메시지 전송 완료
-        except Exception as e:
-            print(f"종료 중 에러 발생: {e}")
+        if hasattr(self, 'consumer'):
+            self.consumer.close()
+        if hasattr(self, 'consumer_thread'):
+            self.consumer_thread.join()
 
-        finally:
-            if hasattr(self, 'producer'):
-                self.producer.close()
-            if hasattr(self, 'consumer'):
-                self.consumer.close()
-            if hasattr(self, 'consumer_thread'):
-                self.consumer_thread.join()
+        msg = {
+            'nickname': "sys",
+            'message': f"--- {self.user_name}님이 퇴장하였습니다. ---",
+            'time': time.strftime('%Y-%m-%d %H:%M:%S')
+        }
+        self.producer.send(self.chat_room, value=msg)
+        self.producer.flush()  # 메시지 전송 완료
+
+        if hasattr(self, 'producer'):
+            self.producer.close()
 
     def run(self) -> None:
         try:
@@ -123,18 +119,14 @@ def is_valid_username(username):
     return re.match(r'^[a-zA-Z0-9]+$', username) is not None
 
 if __name__ == "__main__":
-    server = "ec2-43-203-210-250.ap-northeast-2.compute.amazonaws.com:9092"
-    chatroom = "team4"
-    username = "j25ng"
-
-#    server = input("서버주소 : ")
-#    chatroom = input("대화방명 : ")
-#    while True:
-#        username = input("사용자명 : ")
-#        if is_valid_username(username):
-#            break
-#        else:
-#            print("사용자명에 특수문자가 포함되어 있습니다. 다시 입력해주세요.")
+    server = input("서버주소 : ")
+    chatroom = input("대화방명 : ")
+    while True:
+        username = input("사용자명 : ")
+        if is_valid_username(username):
+            break
+        else:
+            print("사용자명에 특수문자가 포함되어 있습니다. 다시 입력해주세요.")
 
     app = ChatApp(chat_room=chatroom, user_name=username, server=server)
     app.run()
