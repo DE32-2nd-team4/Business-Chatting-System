@@ -162,11 +162,11 @@ def chatbotFindMovie(to_bot_data2):
         if len(actors) > 10:
             actors = actors[:5]
         actor_list = '\n'.join([f"{actor['peopleNm']} ({actor['cast']} 역)" for actor in actors])
-        global_command[f'bot_nic'] = [f"{bot_nic}님, 영화 \"{search_word}\"의 배우는 {actor_list}입니다."]
+        global_command[f'bot_nic'] = [f"{bot_nic}님, 영화 \"{find_name}\"의 배우는 {actor_list}입니다."]
     elif command == 'openStartDt':
-        global_command[f'bot_nic'] = [f"{bot_nic}님, 영화 \"{search_word}\"의 개봉일은 {movie_info['openDt']}입니다."]
+        global_command[f'bot_nic'] = [f"{bot_nic}님, 영화 \"{fint_name}\"의 개봉일은 {movie_info['openDt']}입니다."]
     elif command == 'movieNm':
-        global_command[f'bot_nic'] = [f"{bot_nic}님, 영화의 제목은 \"{search_word}\"입니다."]
+        global_command[f'bot_nic'] = [f"{bot_nic}님, 영화의 제목은 \"{find_name}\"입니다."]
     else:
         global_command[f'bot_nic'] = ["{bot_nic}님, 해당 영화는 없습니다."]
     send_message()
