@@ -25,7 +25,6 @@ def main():
         Commands
         bcs, bcs -h, --help     : Show command help screen
                  -c, --chat     : Enter chatting system
-                 -a, --audit    : Enter chat audit system
                  -i, --ipconfig : Open config ip file
                  -b, --bot      : Start bot
         
