@@ -188,8 +188,8 @@ with DAG(
     start >> task_a >> end
 ```
   ![image](https://github.com/user-attachments/assets/81e07cd9-f198-467e-91b2-006e65819900)
-
   - 영화 검색 챗봇
+
   ![image](https://github.com/user-attachments/assets/971ea35e-b046-4261-8e36-5abf878b5250)
 
 ## Reference
